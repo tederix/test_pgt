@@ -10,15 +10,44 @@ import math as M
 
 from sympy import *
 
+import openpyxl
+
+book = openpyxl.open("2022.xlsx", read_only = True )
+sheet = book.active
+FIO = []
+for row in range (2, sheet.max_row):
+    A = sheet[row][0].value
+    if A == None:
+        break
+    FIO.append(A)
 
 
 st.write("Выполнено: Мурашов.В ФПэ-01-19")
 st.write("Github: " + "https://github.com/tederix/PGT")
 
+with st.sidebar:
+    fio = st.selectbox(
+        "Выберите вариант",
+        (FIO), index=8)
 
-page = st.sidebar.selectbox(
-    "Выберите задание",
-    ("Задание 1", "Задание 2", "Задание 3"))
+    for row in range(2, sheet.max_row):
+        if fio == sheet[row][0].value:
+            index_row = row
+            break
+
+    if(index_row ==4 or index_row ==10 or index_row ==18):
+        st.write()
+    else:
+        st.subheader("Выберите варианты:\n Быковский, Мурашов или Буйницкий")
+
+    page = st.selectbox(
+        "Выберите задание",
+        ("Задание 1", "Задание 2", "Задание 3"))
+
+
+
+
+
 
 
 if page == "Задание 1":
@@ -30,27 +59,29 @@ if page == "Задание 1":
 
     st.write(" *Исходные данные:* ")
 
-    Ne = st.number_input('Введите мощность Nэ, МВт', value=810) * 10 ** 6
+    Ne = st.number_input('Введите мощность Nэ, МВт', value=sheet[index_row][8].value) * 10 ** 6
     st.session_state.Ne = Ne
 
-    p0 = st.number_input('Введите давление P0, МПа', value=24.2) * 10 ** 6
+    p0 = st.number_input('Введите давление P0, МПа', value=sheet[index_row][2].value) * 10 ** 6
     st.session_state.p0 = p0/(10**6)
 
-    t0 = st.number_input('Введите температуру T0, °C', value=550)
+    t0 = st.number_input('Введите температуру T0, °C', value=sheet[index_row][3].value)
     st.session_state.t0 = t0
     T0 = t0 + 273.15
 
-    tpp = st.number_input('Введите температуру Tпп, °C', value=550)
+    tpp = st.number_input('Введите температуру Tпп, °C', value=sheet[index_row][5].value)
     Tpp = tpp + 273.15
 
-    pk = st.number_input('Введите давление Pk, кПа', value=3.7) * 10 ** 3
+    pk = st.number_input('Введите давление Pk, кПа', value=sheet[index_row][6].value) * 10 ** 3
 
-    tpv = st.number_input('Введите температуру Tпв, °C', value=273)
+    tpv = st.number_input('Введите температуру Tпв, °C', value=sheet[index_row][7].value)
     Tpv = tpv + 273.15
 
-    age = st.slider('Укажите максимальную границу Pпп', min_value=2.0, max_value=4.0, step=0.1)
+
+    age_min, age_max = sheet[index_row][4].value.split("-")
+    age = st.slider('Укажите максимальную границу Pпп', min_value=float(age_min), max_value=float(age_max), step=0.1)
     age = age + 0.01
-    P_pp = list(np.arange(2, age, 0.1))
+    P_pp = list(np.arange(float(age_min), age, 0.1))
     ppp = [p * 1e6 for p in P_pp]
     p_pp_min = float(ppp[0])
     p_pp_max = float(ppp[-1])
@@ -59,7 +90,7 @@ if page == "Задание 1":
     delta_p_pp = 0.08 * p_pp_max
     delta_p = 0.03 * p_pp_max
 
-    z = 8
+    z = sheet[index_row][9].value
     st.session_state.z = z
 
     st.write("""# """)
@@ -306,9 +337,8 @@ if page == "Задание 2":
     st.write(" *Исходные данные:* ")
 
     d = 1.1  # m
-    n = 50  # Гц
+    n = sheet[index_row][11].value  # Гц
     st.session_state.n = n
-    H_0 = 100  # кДж/кг
     rho = 0.05
     l_1 = 0.0265  # м
     alpha_1 = 12  # град
@@ -322,7 +352,7 @@ if page == "Задание 2":
     t_0 = st.session_state.t0
     T_0 = t_0 + 273.15
     G_0=float(st.session_state.G0)
-    H_0 = st.number_input('Введите теплоперепад H0, кДж/кг', value=100)
+    H_0 = st.number_input('Введите теплоперепад H0, кДж/кг', value=float(sheet[index_row][12].value))
     z = st.session_state.z
 
     st.write("""# """)
@@ -399,8 +429,8 @@ if page == "Задание 2":
         etta_ol2 = (u * (c_1 * M.cos(M.radians(alpha_1)) + c_2 * M.cos(M.radians(alpha_2)))) / (E_0 * 1e3)
         return etta_ol2, alpha_2
 
-
-    d = [i * 1e-2 for i in list(range(90, 111, 1))]
+    d_min, d_max = sheet[index_row][10].value.replace(',', '.').split("-")
+    d = [i * 1e-2 for i in list(range(int((float(d_min))*100), int((float(d_max))*100+1), 1))]
     alpha1 = []
     eta = []
     ucf = []
@@ -430,7 +460,7 @@ if page == "Задание 2":
     st.write("""# """)
     st.write("Табл. Зависимость ηол от U/cф ")
     df = pd.DataFrame({
-        "d, м": list(frange(0.9, 1.11, 0.01)),
+        "d, м": list(frange(float(d_min), float(d_max)+0.01, 0.01)),
         "ηол": (eta),
         "α": (alpha1),
         "U/cf": (ucf)})      #Таблица

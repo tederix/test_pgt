@@ -11,12 +11,104 @@ import math as M
 from sympy import *
 
 import openpyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.drawing.image import Image
+import os
+import time
+
+
+def print_xlsx():
+    newbook = openpyxl.Workbook()
+    newbook.remove(newbook.active)
+
+    sheet_1 = newbook.create_sheet("Вариант")
+    for column in range(1, st.session_state.sheet.max_column + 1):
+        sheet_1.cell(row=1, column=column).value = st.session_state.sheet.cell(row=1, column=column).value
+        sheet_1.cell(row=2, column=column).value = st.session_state.sheet.cell(row=index_row, column=column).value
+
+    sheet_2 = newbook.create_sheet("Задание 1")
+    sheet_2['A1'] = 'Максимальный КПД'
+    sheet_2['A2'] = 'Расход пара на входе в турбину (G0) при макс. КПД'
+    sheet_2['A3'] = 'Расход пара на входе в конденсатор (Gк) при макс. КПД'
+    sheet_2['A4'] = 'Давление пром. перегрева при макс. КПД'
+    sheet_2['B1'] = st.session_state.eta_fmax
+    sheet_2['B2'] = st.session_state.G0max
+    sheet_2['B3'] = st.session_state.Gkmax
+    sheet_2['B4'] = st.session_state.ppp_fmax
+    sheet_2['C1'] = '%'
+    sheet_2['C2'] = 'кг/с'
+    sheet_2['C3'] = 'кг/с'
+    sheet_2['C4'] = 'МПа'
+    sheet_2['A7'] = 'Табл. Зависимость КПД от Pпп'
+    for r in dataframe_to_rows(st.session_state.ppp_eta, index=False, header=True):
+        sheet_2.append(r)
+    img1 = Image('Зависимость КПД от давления пром. перегрева.png')
+    img2 = Image('h - s диаграмма.png')
+    sheet_2.add_image(img1, 'H1')
+    sheet_2.add_image(img2, 'S1')
+
+    sheet_3 = newbook.create_sheet("Задание 2")
+    sheet_3['A1'] = 'Внутренний относительный КПД ступени eta_oi'
+    sheet_3['A2'] = 'Внутреняя мощность ступени N_i '
+    sheet_3['B1'] = (st.session_state.eta_oi * 100)
+    sheet_3['B2'] = st.session_state.N_i
+    sheet_3['C1'] = '%'
+    sheet_3['C2'] = 'кВт'
+    sheet_3['A5'] = 'Табл. Зависимость ηол от U/cф'
+    for r in dataframe_to_rows(st.session_state.df, index=False, header=True):
+        sheet_3.append(r)
+    img3 = Image('Зависимость ηол от U_cф.png')
+    img4 = Image('new h - s диаграмма.png')
+    img5 = Image('Треугольник скоростей.png')
+    sheet_3.add_image(img3, 'F5')
+    sheet_3.add_image(img4, 'Q1')
+    sheet_3.add_image(img5, 'Q26')
+
+    sheet_4 = newbook.create_sheet("Задание 3")
+    for r in dataframe_to_rows(st.session_state.table, index=False, header=True):
+        sheet_4.append(r)
+    img6 = Image('Рисунок 1 Распределение средних диаметров по проточной части.png')
+    img7 = Image('Рисунок 2 Распределение высот лопаток по проточной части.png')
+    img8 = Image('Рисунок 3 Распределение обратной веерности по проточной части.png')
+    img9 = Image('Рисунок 4 Распределение степени реактивности по проточной части.png')
+    img10 = Image('Рисунок 5 Распределение U_Cф по проточной части.png')
+    img11 = Image('Рисунок 6 Распределение теплоперепадов по проточной части.png')
+    img12 = Image('Рисунок 7 Распределение теплоперепадов с учетом невязки по проточной части.png')
+
+    sheet_4.add_image(img6, 'A25')
+    sheet_4.add_image(img7, 'P25')
+    sheet_4.add_image(img8, 'A50')
+    sheet_4.add_image(img9, 'P50')
+    sheet_4.add_image(img10, 'A75')
+    sheet_4.add_image(img11, 'P75')
+    sheet_4.add_image(img12, 'A100')
+
+    newbook.save("Результаты " + sheet[st.session_state.index_row][0].value + ".xlsx")
+
+def clear():
+    os.remove("Зависимость КПД от давления пром. перегрева.png")
+    os.remove("h - s диаграмма.png")
+    os.remove("Треугольник скоростей.png")
+    os.remove("new h - s диаграмма.png")
+    os.remove("Зависимость ηол от U_cф.png")
+    os.remove("Рисунок 1 Распределение средних диаметров по проточной части.png")
+    os.remove("Рисунок 2 Распределение высот лопаток по проточной части.png")
+    os.remove("Рисунок 3 Распределение обратной веерности по проточной части.png")
+    os.remove("Рисунок 4 Распределение степени реактивности по проточной части.png")
+    os.remove("Рисунок 5 Распределение U_Cф по проточной части.png")
+    os.remove("Рисунок 6 Распределение теплоперепадов по проточной части.png")
+    os.remove("Рисунок 7 Распределение теплоперепадов с учетом невязки по проточной части.png")
+    time.sleep(1)
+    os.remove("Результаты "+ sheet[st.session_state.index_row][0].value + ".xlsx")
+
+
 
 
 
 
 st.write("Выполнено: Мурашов.В ФПэ-01-19")
 st.write("Github: " + "https://github.com/tederix/PGT")
+
 
 with st.sidebar:
 
@@ -42,7 +134,7 @@ with st.sidebar:
             A = sheet[row][0].value
             if A != None:
                 FIO.append(A)
-
+    st.session_state.sheet = sheet
     st.write("#")
     fio = st.selectbox(
         "Выберите вариант",
@@ -51,6 +143,7 @@ with st.sidebar:
     for row in range(2, sheet.max_row):
         if fio == sheet[row][0].value:
             index_row = row
+            st.session_state.index_row = index_row
             break
     if chek:
         if(index_row ==4 or index_row ==10 or index_row ==18):
@@ -60,16 +153,8 @@ with st.sidebar:
 
     page = st.selectbox(
         "Выберите задание",
-        ("Задание 1", "Задание 2", "Задание 3"))
+        ("Задание 1", "Задание 2", "Задание 3", "Скачать результаты"))
 
-    if page == "Задание 3":
-        with open("2022.xlsx", "rb") as file:
-            st.download_button(
-                label="Скачать результаты",
-                data=file,
-                file_name='2022.xlsx',
-                mime='text/xlsx',
-            )
 
 if page == "Задание 1":
 
@@ -240,15 +325,19 @@ if page == "Задание 1":
 
 
     ppp_f = [float(x) * 10**(-6) for x in ppp]
+    st.session_state.ppp_fmax=ppp_f[pos]
     eta_f = [float(x) * 100 for x in eta]
 
-    st.write(""" Максимальное КПД = """ + str('{:.4}'.format(float(eta_f[pos]))) + """ %""")
+    st.write(""" Максимальный КПД = """ + str('{:.4}'.format(float(eta_f[pos]))) + """ %""")
     st.write(""" Расход пара на входе в турбину (G0) при макс. КПД = """ + str('{:.5}'.format(float(G0[pos]))) + """ кг/с""")
     st.write(""" Расход пара на входе в конденсатор (Gк) при макс. КПД = """ + str('{:.5}'.format(float(Gk[pos]))) + """ кг/с""")
+    st.session_state.eta_fmax =float(str('{:.4}'.format(float(eta_f[pos]))))
+    st.session_state.G0max = float(str('{:.5}'.format(float(G0[pos]))))
+    st.session_state.Gkmax =float(str('{:.5}'.format(float(Gk[pos]))))
+    st.session_state.G0 = f"{G0[pos]:.4f}"
+
     st.write("""# """)
     st.write(" Табл. Зависимость КПД от Pпп  ")
-
-    st.session_state.G0 = f"{G0[pos]:.4f}"
 
 
     ppp_eta=pd.DataFrame({"ppp, МПа": (ppp_f),
@@ -257,7 +346,7 @@ if page == "Задание 1":
                        "G_k, кг/с": (Gk)
                        })
     st.dataframe(ppp_eta)
-
+    st.session_state.ppp_eta=ppp_eta
 
     st.write("""# """)
 
@@ -269,7 +358,7 @@ if page == "Задание 1":
     plt.xlabel("P_пп, MПа")
     plt.ylabel("КПД, %")
     plt.grid()
-
+    plt.savefig('Зависимость КПД от давления пром. перегрева.png')
     st.pyplot(ppp__eta)
 
 
@@ -345,7 +434,7 @@ if page == "Задание 1":
         plt.ylabel("h, кДж/кг")
         plt.grid(True)
 
-
+    plt.savefig('h - s диаграмма.png')
     st.pyplot(fighs)
 
 if page == "Задание 2":
@@ -470,6 +559,7 @@ if page == "Задание 2":
     plt.xlabel('U/cф')
     plt.title("Зависимость ηол от U/cф")
     plt.grid(True)
+    plt.savefig('Зависимость ηол от U_cф.png')
     st.pyplot(fighs)
 
 
@@ -486,6 +576,7 @@ if page == "Задание 2":
         "α": (alpha1),
         "U/cf": (ucf)})      #Таблица
     df
+    st.session_state.df=df
     st.write("""# """)
 
 
@@ -733,6 +824,7 @@ if page == "Задание 2":
     plt.title("h - s диаграмма")
     plot_hs_stage_t([point_0.s - 0.005, point_vs.s + 0.005], [point_2t.h - 10, point_0.h + 10])
     plt.grid(True)
+    plt.savefig('new h - s диаграмма.png')
     st.pyplot(fig3)
 
 
@@ -784,6 +876,7 @@ if page == "Задание 2":
     plt.text(2.5 * c_2u / 3, -3 * w_2a / 4, '$c_2$', fontsize=20)
     plt.text(2.5 * w_2u / 3, -3 * w_2a / 4, '$w_2$', fontsize=20)
     plt.title("Треугольник скоростей")
+    plt.savefig('Треугольник скоростей.png')
     st.pyplot(fig4)
 
 
@@ -829,6 +922,7 @@ if page == "Задание 2":
     st.write("""Внутренний относительный КПД ступени   eta_oi = %.3f """ % eta_oi)
     st.write("""Внутреняя мощность ступени  N_i = %.2f кВт""" % N_i)
     st.session_state.eta_oi=f"{eta_oi:.4f}"
+    st.session_state.N_i = f"{N_i:.2f}"
 
 if page == "Задание 3":
 
@@ -999,6 +1093,7 @@ if page == "Задание 3":
                        )
 
     st.dataframe(table)
+    st.session_state.table = table
 
     ## Графики
     z =[]
@@ -1012,6 +1107,7 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, di_, '-ro')
     plt.title('Рисунок 1. Распределение средних диаметров по проточной части')
+    plt.savefig('Рисунок 1 Распределение средних диаметров по проточной части.png')
     st.pyplot(fig)
 
     st.write("#")
@@ -1021,6 +1117,7 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, li_, '-ro')
     plt.title('Рисунок 2. Распределение высот лопаток по проточной части')
+    plt.savefig('Рисунок 2 Распределение высот лопаток по проточной части.png')
     st.pyplot(fig)
 
     st.write("#")
@@ -1030,6 +1127,7 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, tettai_, '-ro')
     plt.title('Рисунок 3. Распределение обратной веерности по проточной части')
+    plt.savefig('Рисунок 3 Распределение обратной веерности по проточной части.png')
     st.pyplot(fig)
 
     st.write("#")
@@ -1039,6 +1137,7 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, rhoi_, '-ro')
     plt.title('Рисунок 4. Распределение степени реактивности по проточной части')
+    plt.savefig('Рисунок 4 Распределение степени реактивности по проточной части.png')
     st.pyplot(fig)
 
     st.write("#")
@@ -1048,6 +1147,7 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, Xi_, '-ro')
     plt.title('Рисунок 5. Распределение U/Cф по проточной части')
+    plt.savefig('Рисунок 5 Распределение U_Cф по проточной части.png')
     st.pyplot(fig)
 
     st.write("#")
@@ -1057,6 +1157,7 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, Hi_, '-ro')
     plt.title('Рисунок 6. Распределение теплоперепадов по проточной части')
+    plt.savefig('Рисунок 6 Распределение теплоперепадов по проточной части.png')
     st.pyplot(fig)
 
     st.write("#")
@@ -1066,7 +1167,20 @@ if page == "Задание 3":
     plt.grid(True)
     plt.plot(z, Hdi_, '-ro')
     plt.title('Рисунок 7. Распределение теплоперепадов с учетом невязки по проточной части')
+    plt.savefig('Рисунок 7 Распределение теплоперепадов с учетом невязки по проточной части.png')
     st.pyplot(fig)
+
+if page == "Скачать результаты":
+    print_xlsx()
+    with open("Результаты "+ sheet[st.session_state.index_row][0].value + ".xlsx", "rb") as file:
+        st.download_button(
+            label="Скачать результаты",
+            data=file,
+            file_name="Результаты "+ sheet[st.session_state.index_row][0].value + ".xlsx",
+            mime='text/xlsx',
+        )
+    clear()
+
 
 
 

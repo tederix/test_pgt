@@ -12,43 +12,64 @@ from sympy import *
 
 import openpyxl
 
-book = openpyxl.open("2022.xlsx", read_only = True )
-sheet = book.active
-FIO = []
-for row in range (2, sheet.max_row):
-    A = sheet[row][0].value
-    if A == None:
-        break
-    FIO.append(A)
+
 
 
 st.write("Выполнено: Мурашов.В ФПэ-01-19")
 st.write("Github: " + "https://github.com/tederix/PGT")
 
 with st.sidebar:
+
+    uploaded_file = st.file_uploader(label="Загрузите файл с заданиями", type='xlsx')
+    if uploaded_file is not None:
+        chek = False
+        indexch=0
+        book = openpyxl.open(uploaded_file, read_only=True)
+        sheet = book.active
+        FIO = []
+        for row in range(2, sheet.max_row):
+            A = sheet[row][0].value
+            if A != None:
+                FIO.append(A)
+    else:
+        st.write("Открыт базовый файл")
+        chek = True
+        indexch=8
+        book = openpyxl.open("2022.xlsx", read_only=True)
+        sheet = book.active
+        FIO = []
+        for row in range(2, sheet.max_row):
+            A = sheet[row][0].value
+            if A != None:
+                FIO.append(A)
+
+    st.write("#")
     fio = st.selectbox(
         "Выберите вариант",
-        (FIO), index=8)
+        (FIO), index=indexch)
 
     for row in range(2, sheet.max_row):
         if fio == sheet[row][0].value:
             index_row = row
             break
-
-    if(index_row ==4 or index_row ==10 or index_row ==18):
-        st.write()
-    else:
-        st.subheader("Выберите варианты:\n Быковский, Мурашов или Буйницкий")
+    if chek:
+        if(index_row ==4 or index_row ==10 or index_row ==18):
+            st.write()
+        else:
+            st.subheader("Выберите варианты:\n Быковский, Мурашов или Буйницкий")
 
     page = st.selectbox(
         "Выберите задание",
         ("Задание 1", "Задание 2", "Задание 3"))
 
-
-
-
-
-
+    if page == "Задание 3":
+        with open("2022.xlsx", "rb") as file:
+            st.download_button(
+                label="Скачать результаты",
+                data=file,
+                file_name='2022.xlsx',
+                mime='text/xlsx',
+            )
 
 if page == "Задание 1":
 
@@ -809,7 +830,6 @@ if page == "Задание 2":
     st.write("""Внутреняя мощность ступени  N_i = %.2f кВт""" % N_i)
     st.session_state.eta_oi=f"{eta_oi:.4f}"
 
-
 if page == "Задание 3":
 
 
@@ -1047,5 +1067,11 @@ if page == "Задание 3":
     plt.plot(z, Hdi_, '-ro')
     plt.title('Рисунок 7. Распределение теплоперепадов с учетом невязки по проточной части')
     st.pyplot(fig)
+
+
+
+
+
+
 
 
